@@ -7,7 +7,10 @@ Real-hardware runs only. Synthetic fixture runs never go here.
 
 Each run added here should include:
 
-- the results JSON written by `bcp validate`
-- a short write-up: provider, instance type, date, driver/CUDA/NCCL versions, and anything
-  unexpected
-- a regenerated comparison table: `bcp report results/runs/*.json --out results/summary.md`
+- the redacted copy `bcp rental package` writes (`runs/day-<time>-share/`), as
+  `results/<date>-<provider>-<shape>/`: `summary.md`, the validation, inference and training
+  JSON, and the plot
+- a short write-up: provider, instance type, region, date, driver/CUDA/NCCL versions, and
+  anything unexpected
+- a regenerated comparison table across runs:
+  `bcp report results/*/validate/*/*.json --out results/summary.md`

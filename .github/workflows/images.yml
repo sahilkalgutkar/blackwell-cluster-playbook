@@ -1,0 +1,44 @@
+name: images
+
+# Build (not push) the containers a rental day depends on, so a broken Dockerfile shows up
+# here rather than on a node billed by the hour.
+on:
+  pull_request:
+    paths: [containers/**, src/**, pyproject.toml, matrix/stack.yaml, .github/workflows/images.yml]
+  push:
+    branches: [main]
+    paths: [containers/**, src/**, pyproject.toml, matrix/stack.yaml, .github/workflows/images.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [bench, nccl-tests]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Free disk space (CUDA devel images are large)
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+      - name: Build with the versions pinned in matrix/stack.yaml
+        run: |
+          pip install -q pyyaml
+          args=$(python - <<'PY'
+          import yaml
+          pins = {c["name"]: c.get("pinned") for c in yaml.safe_load(open("matrix/stack.yaml"))["components"]}
+          names = {"CUDA_VERSION": "cuda", "NCCL_TESTS_VERSION": "nccl-tests", "NVBANDWIDTH_VERSION": "nvbandwidth"}
+          print(" ".join(f"--build-arg {k}={pins[v]}" for k, v in names.items() if pins.get(v)))
+          PY
+          )
+          if [ "${{ matrix.image }}" = bench ]; then
+            # shellcheck disable=SC2086
+            docker build ${args} -t bcp-bench:ci -f containers/bench/Dockerfile .
+            docker run --rm bcp-bench:ci bash -c 'command -v all_reduce_perf nvbandwidth dcgmi nv-hostengine bcp && bcp --version'
+          else
+            # shellcheck disable=SC2086
+            docker build ${args} -t nccl-tests:ci containers/nccl-tests
+          fi

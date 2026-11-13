@@ -34,6 +34,14 @@ jobs:
       - uses: actions/checkout@v7
       - name: Shell scripts
         run: shellcheck scripts/*.sh inference/bench/*.sh hpc/jobs/*.sbatch
+      - name: Rental day plan renders, and its generated scripts pass shellcheck
+        run: |
+          pip install -e .
+          bcp rental plan --gpus 8 --commands > /dev/null
+          bcp rental plan --rehearse --gpus 2 --gpu-name "NVIDIA H100" --compute-cap 9.0 \
+            --render-dir build/rendered-rehearsal > /dev/null
+          bcp rental plan --gpus 8 --render-dir build/rendered > /dev/null
+          shellcheck build/rendered/*.sh build/rendered-rehearsal/*.sh
       - name: Kubernetes manifests
         run: |
           curl -sSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz
@@ -48,3 +56,22 @@ jobs:
           pip install ansible-core
           cp hpc/ansible/inventory.example.ini hpc/ansible/inventory.ini
           ansible-playbook --syntax-check -i hpc/ansible/inventory.ini hpc/ansible/site.yml
+
+  training-cpu:
+    # The training benchmark's loop, DDP and FSDP2 paths on CPU, so a typo can't waste
+    # rented GPU time. Transformer Engine and the FP8 recipes only run on the GPU.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install torch numpy --index-url https://download.pytorch.org/whl/cpu
+      - name: Single process
+        run: python training/bench_train.py --device cpu --preset debug --seq-len 64 --steps 3 --warmup-steps 1 --out build/t1.json
+      - name: DDP, 2 processes
+        run: torchrun --standalone --nproc-per-node 2 training/bench_train.py --device cpu --preset debug --seq-len 64 --steps 3 --warmup-steps 1 --parallel ddp --out build/t2.json
+      - name: FSDP2 with activation checkpointing, 2 processes
+        run: torchrun --standalone --nproc-per-node 2 training/bench_train.py --device cpu --preset debug --seq-len 64 --steps 3 --warmup-steps 1 --parallel fsdp2 --activation-checkpointing --out build/t3.json
+      - name: Same losses from DDP and FSDP2
+        run: python -c "import json; a, b = (json.load(open(f'build/t{i}.json')) for i in (2, 3)); assert a['loss_last'] == b['loss_last'], (a['loss_last'], b['loss_last'])"
