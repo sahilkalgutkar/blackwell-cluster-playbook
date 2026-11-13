@@ -1,0 +1,6 @@
+# One block per NVLink domain (an NVL72 rack). Slurm then packs a job into as few blocks
+# as possible, so GPU-to-GPU traffic stays on NVLink instead of the scale-out network.
+{% for block in slurm_topology_blocks %}
+BlockName={{ block.name }} Nodes={{ block.nodes }}
+{% endfor %}
+BlockSizes={{ slurm_block_sizes }}

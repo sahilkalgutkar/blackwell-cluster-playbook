@@ -1,0 +1,20 @@
+- name: Install munge
+  ansible.builtin.apt:
+    name: [munge, libmunge2]
+    state: present
+    update_cache: true
+
+- name: Distribute the cluster munge key
+  ansible.builtin.copy:
+    src: "{{ munge_key_src }}"
+    dest: /etc/munge/munge.key
+    owner: munge
+    group: munge
+    mode: "0400"
+  notify: Restart munge
+
+- name: Enable munge
+  ansible.builtin.service:
+    name: munge
+    state: started
+    enabled: true

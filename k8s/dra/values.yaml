@@ -1,0 +1,15 @@
+# Helm values for kubernetes-sigs/dra-driver-nvidia-gpu (formerly NVIDIA/k8s-dra-driver-gpu).
+# Install it with the chart from that repo at the version pinned in matrix/stack.yaml.
+#
+# This setup uses the driver only for ComputeDomains (multi-node NVLink / IMEX channels on
+# GB200 and GB300 NVL72). GPUs themselves stay with the GPU Operator's device plugin.
+
+# The GPU Operator's driver container mounts the driver here. Use "/" when the driver is
+# installed on the host (DGX OS, most clouds).
+nvidiaDriverRoot: /
+
+resources:
+  gpus:
+    enabled: false
+  computeDomains:
+    enabled: true

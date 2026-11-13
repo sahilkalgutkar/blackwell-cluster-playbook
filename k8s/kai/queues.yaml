@@ -1,0 +1,39 @@
+# KAI Scheduler queues (kai-scheduler/KAI-Scheduler): split a GPU cluster between
+# latency-sensitive inference and preemptible training/benchmarks.
+#
+# Workloads pick a queue with the label `kai.scheduler/queue: <leaf queue>` and
+# `schedulerName: kai-scheduler`. quota = guaranteed GPUs; limit -1 = may borrow idle GPUs.
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: cluster
+spec:
+  resources:
+    cpu: { quota: -1, limit: -1, overQuotaWeight: 1 }
+    gpu: { quota: -1, limit: -1, overQuotaWeight: 1 }
+    memory: { quota: -1, limit: -1, overQuotaWeight: 1 }
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: inference
+spec:
+  parentQueue: cluster
+  priority: 100
+  resources:
+    cpu: { quota: -1, limit: -1, overQuotaWeight: 1 }
+    gpu: { quota: 8, limit: -1, overQuotaWeight: 2 }
+    memory: { quota: -1, limit: -1, overQuotaWeight: 1 }
+---
+apiVersion: scheduling.run.ai/v2
+kind: Queue
+metadata:
+  name: benchmarks
+spec:
+  parentQueue: cluster
+  priority: 50
+  resources:
+    cpu: { quota: -1, limit: -1, overQuotaWeight: 1 }
+    gpu: { quota: 0, limit: -1, overQuotaWeight: 1 }
+    memory: { quota: -1, limit: -1, overQuotaWeight: 1 }

@@ -1,0 +1,48 @@
+# Collective test starting: reduce_scatter_perf
+# nThread 1 nGpus 4 minBytes 8 maxBytes 8589934592 step: 2(factor) warmup iters: 1 iters: 20 agg iters: 1 validation: 1 graph: 0
+#
+# Using devices
+#  Rank  0 Group  0 Pid 412233 on synthetic-gb200-nvl72-tray07 device  0 [0000:18:00] NVIDIA GB200
+#  Rank  1 Group  0 Pid 412233 on synthetic-gb200-nvl72-tray07 device  1 [0000:28:00] NVIDIA GB200
+#  Rank  2 Group  0 Pid 412233 on synthetic-gb200-nvl72-tray07 device  2 [0000:38:00] NVIDIA GB200
+#  Rank  3 Group  0 Pid 412233 on synthetic-gb200-nvl72-tray07 device  3 [0000:48:00] NVIDIA GB200
+NCCL version 2.32.6+cuda13.0
+#
+#                                                              out-of-place                       in-place          
+#       size         count      type   redop    root     time   algbw   busbw #wrong     time   algbw   busbw #wrong
+#        (B)    (elements)                               (us)  (GB/s)  (GB/s)            (us)  (GB/s)  (GB/s)       
+           0             0     float     sum      -1     0.20    0.00    0.00      0     0.20    0.00    0.00      0
+          16             1     float     sum      -1    10.50    0.00    0.00      0    10.40    0.00    0.00      0
+          32             2     float     sum      -1    10.50    0.00    0.00      0    10.40    0.00    0.00      0
+          64             4     float     sum      -1    10.50    0.01    0.00      0    10.40    0.01    0.00      0
+         128             8     float     sum      -1    10.50    0.01    0.01      0    10.40    0.01    0.01      0
+         256            16     float     sum      -1    10.50    0.02    0.02      0    10.40    0.02    0.02      0
+         512            32     float     sum      -1    10.50    0.05    0.04      0    10.40    0.05    0.04      0
+        1024            64     float     sum      -1    10.50    0.10    0.07      0    10.40    0.10    0.07      0
+        2048           128     float     sum      -1    10.50    0.20    0.15      0    10.40    0.20    0.15      0
+        4096           256     float     sum      -1    10.51    0.39    0.29      0    10.40    0.39    0.30      0
+        8192           512     float     sum      -1    10.51    0.78    0.58      0    10.41    0.79    0.59      0
+       16384          1024     float     sum      -1    10.52    1.56    1.17      0    10.42    1.57    1.18      0
+       32768          2048     float     sum      -1    10.54    3.11    2.33      0    10.44    3.14    2.35      0
+       65536          4096     float     sum      -1    10.58    6.19    4.64      0    10.48    6.26    4.69      0
+      131072          8192     float     sum      -1    10.66   12.29    9.22      0    10.56   12.41    9.31      0
+      262144         16384     float     sum      -1    10.83   24.21   18.16      0    10.72   24.45   18.34      0
+      524288         32768     float     sum      -1    11.16   47.00   35.25      0    11.04   47.47   35.60      0
+     1048576         65536     float     sum      -1    11.81   88.78   66.59      0    11.69   89.67   67.25      0
+     2097152        131072     float     sum      -1    13.12  159.83  119.87      0    12.99  161.42  121.07      0
+     4194304        262144     float     sum      -1    15.74  266.43  199.82      0    15.59  269.09  201.82      0
+     8388608        524288     float     sum      -1    20.99  399.73  299.80      0    20.78  403.73  302.79      0
+    16777216       1048576     float     sum      -1    31.47  533.09  399.82      0    31.16  538.42  403.82      0
+    33554432       2097152     float     sum      -1    52.44  639.83  479.87      0    51.92  646.22  484.67      0
+    67108864       4194304     float     sum      -1    94.39  711.00  533.25      0    93.44  718.11  538.59      0
+   134217728       8388608     float     sum      -1   178.27  752.88  564.66      0   176.49  760.41  570.31      0
+   268435456      16777216     float     sum      -1   346.04  775.73  581.79      0   342.58  783.48  587.61      0
+   536870912      33554432     float     sum      -1   681.59  787.68  590.76      0   674.77  795.55  596.66      0
+  1073741824      67108864     float     sum      -1  1352.68  793.79  595.34      0  1339.15  801.73  601.30      0
+  2147483648     134217728     float     sum      -1  2694.85  796.88  597.66      0  2667.91  804.85  603.64      0
+  4294967296     268435456     float     sum      -1  5379.21  798.44  598.83      0  5325.42  806.42  604.82      0
+  8589934592     536870912     float     sum      -1 10747.92  799.22  599.41      0 10640.44  807.21  605.41      0
+# Out of bounds values : 0 OK
+# Avg bus bandwidth    : 203.2068 
+#
+# Collective test concluded: reduce_scatter_perf

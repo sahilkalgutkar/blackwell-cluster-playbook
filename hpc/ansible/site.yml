@@ -1,0 +1,29 @@
+# Slurm + Enroot/Pyxis for GPU nodes (HGX B200 or GB200/GB300 NVL72 trays).
+#
+#   cp hpc/ansible/inventory.example.ini hpc/ansible/inventory.ini   # edit hosts
+#   dd if=/dev/urandom bs=1 count=1024 > hpc/ansible/files/munge.key  # once, keep secret
+#   ansible-playbook -i hpc/ansible/inventory.ini hpc/ansible/site.yml
+#
+# Status: DRAFT. Syntax-checked in CI, not yet run against real nodes.
+- name: Common setup (munge auth) on every host
+  hosts: all
+  become: true
+  roles:
+    - common
+
+- name: Slurm controller
+  hosts: slurmctld
+  become: true
+  roles:
+    - role: slurm
+      vars:
+        slurm_role: controller
+
+- name: GPU compute nodes
+  hosts: slurmd
+  become: true
+  roles:
+    - role: slurm
+      vars:
+        slurm_role: compute
+    - enroot_pyxis

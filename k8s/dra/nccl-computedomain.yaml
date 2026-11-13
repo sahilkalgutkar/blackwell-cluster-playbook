@@ -1,0 +1,72 @@
+# nccl-tests across two GB200/GB300 NVL72 compute trays over multi-node NVLink.
+#
+# The ComputeDomain makes the DRA driver start an IMEX daemon on the selected nodes and
+# inject an IMEX channel into each worker, which is what lets NCCL treat GPUs on different
+# trays as one NVLink domain. Without it the same job falls back to InfiniBand/Ethernet.
+#
+# Needs: DRA driver with computeDomains enabled (k8s/dra/values.yaml), the Kubeflow MPI
+# Operator, and an image built from containers/nccl-tests.
+# Pattern follows the upstream demo: demo/specs/imex/nvbandwidth-test-job-1.yaml
+---
+apiVersion: resource.nvidia.com/v1beta1
+kind: ComputeDomain
+metadata:
+  name: nccl-tests-domain
+spec:
+  numNodes: 2
+  channel:
+    resourceClaimTemplate:
+      name: nccl-tests-domain-channel
+---
+apiVersion: kubeflow.org/v2beta1
+kind: MPIJob
+metadata:
+  name: nccl-tests-mnnvl
+spec:
+  slotsPerWorker: 4
+  launcherCreationPolicy: WaitForWorkersReady
+  runPolicy:
+    cleanPodPolicy: Running
+  mpiReplicaSpecs:
+    Launcher:
+      replicas: 1
+      template:
+        spec:
+          containers:
+            - name: launcher
+              image: ghcr.io/REPLACE_ME/nccl-tests:cuda13.5
+              command: [mpirun]
+              args:
+                - --allow-run-as-root
+                - -np
+                - "8"
+                - --map-by
+                - ppr:4:node
+                - -x
+                - NCCL_DEBUG=VERSION
+                - all_reduce_perf
+                - -b
+                - "8"
+                - -e
+                - 16G
+                - -f
+                - "2"
+                - -g
+                - "1"
+    Worker:
+      replicas: 2
+      template:
+        spec:
+          containers:
+            - name: worker
+              image: ghcr.io/REPLACE_ME/nccl-tests:cuda13.5
+              command: [/usr/sbin/sshd]
+              args: [-De]
+              resources:
+                limits:
+                  nvidia.com/gpu: 4
+                claims:
+                  - name: compute-domain-channel
+          resourceClaims:
+            - name: compute-domain-channel
+              resourceClaimTemplateName: nccl-tests-domain-channel

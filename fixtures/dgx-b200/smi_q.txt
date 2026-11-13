@@ -1,0 +1,112 @@
+
+==============NVSMI LOG==============
+
+Timestamp                                 : Thu Nov 12 09:14:02 2026
+Driver Version                            : 580.95.05
+CUDA Version                              : 13.0
+
+Attached GPUs                             : 8
+GPU 00000000:18:00.0
+    Product Name                          : NVIDIA B200
+    Product Brand                         : NVIDIA
+    Product Architecture                  : Blackwell
+    Persistence Mode                      : Enabled
+    Fabric
+        State                             : Completed
+        Status                            : Success
+        CliqueId                          : 0
+        ClusterUUID                       : 00000000-0000-0000-0000-000000000000
+        Health
+            Bandwidth                     : Full
+    Processes                             : None
+GPU 00000000:28:00.0
+    Product Name                          : NVIDIA B200
+    Product Brand                         : NVIDIA
+    Product Architecture                  : Blackwell
+    Persistence Mode                      : Enabled
+    Fabric
+        State                             : Completed
+        Status                            : Success
+        CliqueId                          : 0
+        ClusterUUID                       : 00000000-0000-0000-0000-000000000000
+        Health
+            Bandwidth                     : Full
+    Processes                             : None
+GPU 00000000:38:00.0
+    Product Name                          : NVIDIA B200
+    Product Brand                         : NVIDIA
+    Product Architecture                  : Blackwell
+    Persistence Mode                      : Enabled
+    Fabric
+        State                             : Completed
+        Status                            : Success
+        CliqueId                          : 0
+        ClusterUUID                       : 00000000-0000-0000-0000-000000000000
+        Health
+            Bandwidth                     : Full
+    Processes                             : None
+GPU 00000000:48:00.0
+    Product Name                          : NVIDIA B200
+    Product Brand                         : NVIDIA
+    Product Architecture                  : Blackwell
+    Persistence Mode                      : Enabled
+    Fabric
+        State                             : Completed
+        Status                            : Success
+        CliqueId                          : 0
+        ClusterUUID                       : 00000000-0000-0000-0000-000000000000
+        Health
+            Bandwidth                     : Full
+    Processes                             : None
+GPU 00000000:58:00.0
+    Product Name                          : NVIDIA B200
+    Product Brand                         : NVIDIA
+    Product Architecture                  : Blackwell
+    Persistence Mode                      : Enabled
+    Fabric
+        State                             : Completed
+        Status                            : Success
+        CliqueId                          : 0
+        ClusterUUID                       : 00000000-0000-0000-0000-000000000000
+        Health
+            Bandwidth                     : Full
+    Processes                             : None
+GPU 00000000:68:00.0
+    Product Name                          : NVIDIA B200
+    Product Brand                         : NVIDIA
+    Product Architecture                  : Blackwell
+    Persistence Mode                      : Enabled
+    Fabric
+        State                             : Completed
+        Status                            : Success
+        CliqueId                          : 0
+        ClusterUUID                       : 00000000-0000-0000-0000-000000000000
+        Health
+            Bandwidth                     : Full
+    Processes                             : None
+GPU 00000000:78:00.0
+    Product Name                          : NVIDIA B200
+    Product Brand                         : NVIDIA
+    Product Architecture                  : Blackwell
+    Persistence Mode                      : Enabled
+    Fabric
+        State                             : Completed
+        Status                            : Success
+        CliqueId                          : 0
+        ClusterUUID                       : 00000000-0000-0000-0000-000000000000
+        Health
+            Bandwidth                     : Full
+    Processes                             : None
+GPU 00000000:88:00.0
+    Product Name                          : NVIDIA B200
+    Product Brand                         : NVIDIA
+    Product Architecture                  : Blackwell
+    Persistence Mode                      : Enabled
+    Fabric
+        State                             : Completed
+        Status                            : Success
+        CliqueId                          : 0
+        ClusterUUID                       : 00000000-0000-0000-0000-000000000000
+        Health
+            Bandwidth                     : Full
+    Processes                             : None

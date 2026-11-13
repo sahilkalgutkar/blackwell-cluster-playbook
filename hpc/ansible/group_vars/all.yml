@@ -1,0 +1,23 @@
+slurm_cluster_name: blackwell
+slurm_partition: gpu
+
+# GRES type shown in `sinfo` / requested as --gres=gpu:<type>:N
+slurm_gpu_type: b200        # b200 | b300 | gb200 | gb300 | h100
+slurm_gpus_per_node: 8      # 8 on HGX, 4 on an NVL72 compute tray
+
+# NVL72: one Slurm "block" per NVLink domain, so jobs can be kept inside one rack.
+# topology/block needs Slurm 24.05 or newer; the Slurm packaged with Ubuntu 24.04 is older,
+# so use SchedMD packages (or build from source) before turning this on.
+slurm_topology_plugin: default      # default | topology/block | topology/tree
+slurm_topology_blocks: []
+#  - name: nvl72-rack01
+#    nodes: "gb200-[01-18]"
+#  - name: nvl72-rack02
+#    nodes: "gb200-[19-36]"
+slurm_block_sizes: "18"             # 18 trays x 4 GPUs = 72 GPUs per block
+
+# Versions are pinned in matrix/stack.yaml; keep these in sync.
+enroot_version: "4.2.1"
+pyxis_version: "0.24.0"
+
+munge_key_src: "{{ playbook_dir }}/files/munge.key"

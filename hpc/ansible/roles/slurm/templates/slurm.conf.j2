@@ -1,0 +1,23 @@
+# Managed by Ansible (hpc/ansible). Local edits will be overwritten.
+ClusterName={{ slurm_cluster_name }}
+SlurmctldHost={{ groups['slurmctld'][0] }}
+AuthType=auth/munge
+SlurmUser=slurm
+StateSaveLocation=/var/spool/slurmctld
+SlurmdSpoolDir=/var/spool/slurmd
+
+# Jobs ask for MPI explicitly: srun --mpi=pmix
+MpiDefault=none
+ProctrackType=proctrack/cgroup
+TaskPlugin=task/cgroup,task/affinity
+SelectType=select/cons_tres
+SelectTypeParameters=CR_Core_Memory
+GresTypes=gpu
+{% if slurm_topology_plugin != "default" %}
+TopologyPlugin={{ slurm_topology_plugin }}
+{% endif %}
+
+{% for host in groups['slurmd'] %}
+NodeName={{ host }} Gres=gpu:{{ slurm_gpu_type }}:{{ slurm_gpus_per_node }}{% if hostvars[host].slurm_cpus is defined %} CPUs={{ hostvars[host].slurm_cpus }}{% endif %}{% if hostvars[host].slurm_real_memory_mb is defined %} RealMemory={{ hostvars[host].slurm_real_memory_mb }}{% endif %} State=UNKNOWN
+{% endfor %}
+PartitionName={{ slurm_partition }} Nodes=ALL Default=YES MaxTime=INFINITE State=UP OverSubscribe=EXCLUSIVE

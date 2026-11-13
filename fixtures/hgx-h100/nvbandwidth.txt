@@ -1,0 +1,43 @@
+nvbandwidth Version: v0.11.0
+Built from Git version: v0.11.0
+
+CUDA Runtime Version: 13000
+CUDA Driver Version: 13000
+Driver Version: 580.95.05
+
+Device 0: NVIDIA H100 80GB HBM3 (0000:18:00.0)
+Device 1: NVIDIA H100 80GB HBM3 (0000:28:00.0)
+Device 2: NVIDIA H100 80GB HBM3 (0000:38:00.0)
+Device 3: NVIDIA H100 80GB HBM3 (0000:48:00.0)
+Device 4: NVIDIA H100 80GB HBM3 (0000:58:00.0)
+Device 5: NVIDIA H100 80GB HBM3 (0000:68:00.0)
+Device 6: NVIDIA H100 80GB HBM3 (0000:78:00.0)
+Device 7: NVIDIA H100 80GB HBM3 (0000:88:00.0)
+
+Running device_to_device_memcpy_read_ce.
+memcpy CE CPU(row) <- GPU(column) bandwidth (GB/s)
+              0         1         2         3         4         5         6         7
+  0         N/A    389.81    389.59    389.92    389.70    389.48    389.81    389.59
+  1      389.70       N/A    389.81    389.59    389.92    389.70    389.48    389.81
+  2      389.92    389.70       N/A    389.81    389.59    389.92    389.70    389.48
+  3      389.59    389.92    389.70       N/A    389.81    389.59    389.92    389.70
+  4      389.81    389.59    389.92    389.70       N/A    389.81    389.59    389.92
+  5      389.48    389.81    389.59    389.92    389.70       N/A    389.81    389.59
+  6      389.70    389.48    389.81    389.59    389.92    389.70       N/A    389.81
+  7      389.92    389.70    389.48    389.81    389.59    389.92    389.70       N/A
+
+SUM device_to_device_memcpy_read_ce 21824.63
+
+Running host_to_device_memcpy_ce.
+memcpy CE CPU(row) -> GPU(column) bandwidth (GB/s)
+              0         1         2         3         4         5         6         7
+  0       55.60     55.67     55.74     55.60     55.67     55.74     55.60     55.67
+
+SUM host_to_device_memcpy_ce 445.29
+
+Running device_to_host_memcpy_ce.
+memcpy CE CPU(row) <- GPU(column) bandwidth (GB/s)
+              0         1         2         3         4         5         6         7
+  0       54.49     54.54     54.49     54.54     54.49     54.54     54.49     54.54
+
+SUM device_to_host_memcpy_ce 436.12

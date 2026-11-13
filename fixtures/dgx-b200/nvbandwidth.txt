@@ -1,0 +1,43 @@
+nvbandwidth Version: v0.11.0
+Built from Git version: v0.11.0
+
+CUDA Runtime Version: 13000
+CUDA Driver Version: 13000
+Driver Version: 580.95.05
+
+Device 0: NVIDIA B200 (0000:18:00.0)
+Device 1: NVIDIA B200 (0000:28:00.0)
+Device 2: NVIDIA B200 (0000:38:00.0)
+Device 3: NVIDIA B200 (0000:48:00.0)
+Device 4: NVIDIA B200 (0000:58:00.0)
+Device 5: NVIDIA B200 (0000:68:00.0)
+Device 6: NVIDIA B200 (0000:78:00.0)
+Device 7: NVIDIA B200 (0000:88:00.0)
+
+Running device_to_device_memcpy_read_ce.
+memcpy CE CPU(row) <- GPU(column) bandwidth (GB/s)
+              0         1         2         3         4         5         6         7
+  0         N/A    771.51    771.29    771.62    771.40    771.18    771.51    771.29
+  1      771.40       N/A    771.51    771.29    771.62    771.40    771.18    771.51
+  2      771.62    771.40       N/A    771.51    771.29    771.62    771.40    771.18
+  3      771.29    771.62    771.40       N/A    771.51    771.29    771.62    771.40
+  4      771.51    771.29    771.62    771.40       N/A    771.51    771.29    771.62
+  5      771.18    771.51    771.29    771.62    771.40       N/A    771.51    771.29
+  6      771.40    771.18    771.51    771.29    771.62    771.40       N/A    771.51
+  7      771.62    771.40    771.18    771.51    771.29    771.62    771.40       N/A
+
+SUM device_to_device_memcpy_read_ce 43199.83
+
+Running host_to_device_memcpy_ce.
+memcpy CE CPU(row) -> GPU(column) bandwidth (GB/s)
+              0         1         2         3         4         5         6         7
+  0       55.90     55.97     56.04     55.90     55.97     56.04     55.90     55.97
+
+SUM host_to_device_memcpy_ce 447.69
+
+Running device_to_host_memcpy_ce.
+memcpy CE CPU(row) <- GPU(column) bandwidth (GB/s)
+              0         1         2         3         4         5         6         7
+  0       54.78     54.83     54.78     54.83     54.78     54.83     54.78     54.83
+
+SUM device_to_host_memcpy_ce 438.44

@@ -1,0 +1,35 @@
+nvbandwidth Version: v0.11.0
+Built from Git version: v0.11.0
+
+CUDA Runtime Version: 13000
+CUDA Driver Version: 13000
+Driver Version: 580.95.05
+
+Device 0: NVIDIA GB200 (0000:18:00.0)
+Device 1: NVIDIA GB200 (0000:28:00.0)
+Device 2: NVIDIA GB200 (0000:38:00.0)
+Device 3: NVIDIA GB200 (0000:48:00.0)
+
+Running device_to_device_memcpy_read_ce.
+memcpy CE CPU(row) <- GPU(column) bandwidth (GB/s)
+              0         1         2         3
+  0         N/A    768.31    768.09    768.42
+  1      768.20       N/A    768.31    768.09
+  2      768.42    768.20       N/A    768.31
+  3      768.09    768.42    768.20       N/A
+
+SUM device_to_device_memcpy_read_ce 9219.06
+
+Running host_to_device_memcpy_ce.
+memcpy CE CPU(row) -> GPU(column) bandwidth (GB/s)
+              0         1         2         3
+  0      355.00    355.07    355.14    355.00
+
+SUM host_to_device_memcpy_ce 1420.21
+
+Running device_to_host_memcpy_ce.
+memcpy CE CPU(row) <- GPU(column) bandwidth (GB/s)
+              0         1         2         3
+  0      347.90    347.95    347.90    347.95
+
+SUM device_to_host_memcpy_ce 1391.70

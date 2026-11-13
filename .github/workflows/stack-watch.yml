@@ -1,0 +1,38 @@
+# Weekly: compare matrix/stack.yaml with upstream releases and open a PR for anything new.
+# Needs Settings → Actions → General → "Allow GitHub Actions to create and approve pull
+# requests" turned on for the repository.
+name: stack-watch
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"   # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: pip install -e .
+      - name: Check upstream versions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bcp stack check --update --summary-file stack-summary.md
+          cat stack-summary.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: peter-evans/create-pull-request@v8
+        with:
+          branch: stack-watch/bump
+          add-paths: matrix/stack.yaml
+          commit-message: "stack: bump pinned upstream versions"
+          title: "stack: bump pinned upstream versions"
+          body-path: stack-summary.md
+          labels: stack-watch
+          delete-branch: true

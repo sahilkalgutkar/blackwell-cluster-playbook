@@ -1,0 +1,354 @@
+{
+  "version": "4.7.0",
+  "DCGM Diagnostic": {
+    "test_categories": [
+      {
+        "category": "Deployment",
+        "tests": [
+          {
+            "name": "software",
+            "results": [
+              {
+                "status": "Pass"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "category": "Hardware",
+        "tests": [
+          {
+            "name": "memory",
+            "results": [
+              {
+                "entity_group": "GPU",
+                "entity_id": 0,
+                "gpu_id": "0",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 1,
+                "gpu_id": "1",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 2,
+                "gpu_id": "2",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 3,
+                "gpu_id": "3",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 4,
+                "gpu_id": "4",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 5,
+                "gpu_id": "5",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 6,
+                "gpu_id": "6",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 7,
+                "gpu_id": "7",
+                "status": "Pass"
+              }
+            ]
+          },
+          {
+            "name": "pcie",
+            "results": [
+              {
+                "entity_group": "GPU",
+                "entity_id": 0,
+                "gpu_id": "0",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 1,
+                "gpu_id": "1",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 2,
+                "gpu_id": "2",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 3,
+                "gpu_id": "3",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 4,
+                "gpu_id": "4",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 5,
+                "gpu_id": "5",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 6,
+                "gpu_id": "6",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 7,
+                "gpu_id": "7",
+                "status": "Pass"
+              }
+            ]
+          },
+          {
+            "name": "diagnostic",
+            "results": [
+              {
+                "entity_group": "GPU",
+                "entity_id": 0,
+                "gpu_id": "0",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 1,
+                "gpu_id": "1",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 2,
+                "gpu_id": "2",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 3,
+                "gpu_id": "3",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 4,
+                "gpu_id": "4",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 5,
+                "gpu_id": "5",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 6,
+                "gpu_id": "6",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 7,
+                "gpu_id": "7",
+                "status": "Pass"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "category": "Integration",
+        "tests": [
+          {
+            "name": "memory_bandwidth",
+            "results": [
+              {
+                "entity_group": "GPU",
+                "entity_id": 0,
+                "gpu_id": "0",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 1,
+                "gpu_id": "1",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 2,
+                "gpu_id": "2",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 3,
+                "gpu_id": "3",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 4,
+                "gpu_id": "4",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 5,
+                "gpu_id": "5",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 6,
+                "gpu_id": "6",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 7,
+                "gpu_id": "7",
+                "status": "Pass"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "category": "Stress",
+        "tests": [
+          {
+            "name": "targeted_stress",
+            "results": [
+              {
+                "entity_group": "GPU",
+                "entity_id": 0,
+                "gpu_id": "0",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 1,
+                "gpu_id": "1",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 2,
+                "gpu_id": "2",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 3,
+                "gpu_id": "3",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 4,
+                "gpu_id": "4",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 5,
+                "gpu_id": "5",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 6,
+                "gpu_id": "6",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 7,
+                "gpu_id": "7",
+                "status": "Pass"
+              }
+            ]
+          },
+          {
+            "name": "targeted_power",
+            "results": [
+              {
+                "entity_group": "GPU",
+                "entity_id": 0,
+                "gpu_id": "0",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 1,
+                "gpu_id": "1",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 2,
+                "gpu_id": "2",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 3,
+                "gpu_id": "3",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 4,
+                "gpu_id": "4",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 5,
+                "gpu_id": "5",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 6,
+                "gpu_id": "6",
+                "status": "Pass"
+              },
+              {
+                "entity_group": "GPU",
+                "entity_id": 7,
+                "gpu_id": "7",
+                "status": "Pass"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "driver_version_detected": "580.95.05"
+}

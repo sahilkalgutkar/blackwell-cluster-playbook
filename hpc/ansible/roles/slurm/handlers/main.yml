@@ -1,0 +1,4 @@
+- name: Restart slurm daemon
+  ansible.builtin.service:
+    name: "{{ 'slurmctld' if slurm_role == 'controller' else 'slurmd' }}"
+    state: restarted

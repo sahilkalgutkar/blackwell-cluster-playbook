@@ -1,0 +1,85 @@
+# Pass/fail thresholds used by `bcp validate`, keyed by GPU model.
+#
+# These are conservative STARTING POINTS, roughly 80-85% of what healthy single-node runs
+# typically reach. They are not NVIDIA specifications. Once you have a known-good node,
+# run `bcp validate --suite full` on it and set each threshold to ~90% of what it measured.
+#
+# nccl:        minimum peak bus bandwidth across message sizes, single node, all local GPUs
+# nvbandwidth: minimum average over all GPU pairs / CPU-GPU paths, copy engine
+# Units are GB/s.
+
+defaults:
+  dcgm:
+    allow_warn: true   # a DCGM "Warn" fails validation when this is false
+
+profiles:
+  H100:
+    expected_gpus: 8
+    nccl:
+      all_reduce:     { min_peak_busbw_gbps: 400 }
+      all_gather:     { min_peak_busbw_gbps: 300 }
+      reduce_scatter: { min_peak_busbw_gbps: 300 }
+      alltoall:       { min_peak_busbw_gbps: 250 }
+    nvbandwidth:
+      device_to_device_memcpy_read_ce: { min_avg_gbps: 330 }
+      host_to_device_memcpy_ce:        { min_avg_gbps: 45 }   # PCIe Gen5 x16
+      device_to_host_memcpy_ce:        { min_avg_gbps: 45 }
+
+  H200:
+    expected_gpus: 8
+    nccl:
+      all_reduce:     { min_peak_busbw_gbps: 400 }
+      all_gather:     { min_peak_busbw_gbps: 300 }
+      reduce_scatter: { min_peak_busbw_gbps: 300 }
+      alltoall:       { min_peak_busbw_gbps: 250 }
+    nvbandwidth:
+      device_to_device_memcpy_read_ce: { min_avg_gbps: 330 }
+      host_to_device_memcpy_ce:        { min_avg_gbps: 45 }
+      device_to_host_memcpy_ce:        { min_avg_gbps: 45 }
+
+  B200:
+    expected_gpus: 8
+    nccl:
+      all_reduce:     { min_peak_busbw_gbps: 650 }
+      all_gather:     { min_peak_busbw_gbps: 550 }
+      reduce_scatter: { min_peak_busbw_gbps: 550 }
+      alltoall:       { min_peak_busbw_gbps: 500 }
+    nvbandwidth:
+      device_to_device_memcpy_read_ce: { min_avg_gbps: 650 }
+      host_to_device_memcpy_ce:        { min_avg_gbps: 45 }
+      device_to_host_memcpy_ce:        { min_avg_gbps: 45 }
+
+  B300:
+    expected_gpus: 8
+    nccl:
+      all_reduce:     { min_peak_busbw_gbps: 650 }
+      all_gather:     { min_peak_busbw_gbps: 550 }
+      reduce_scatter: { min_peak_busbw_gbps: 550 }
+      alltoall:       { min_peak_busbw_gbps: 500 }
+    nvbandwidth:
+      device_to_device_memcpy_read_ce: { min_avg_gbps: 650 }
+
+  # One NVL72 compute tray: 2 Grace CPUs + 4 GPUs. Host<->GPU runs over NVLink-C2C.
+  # For rack-wide numbers, run nccl-tests across trays (hpc/jobs/nccl-multinode.sbatch or
+  # k8s/dra/nccl-computedomain.yaml) and compare against your own baseline.
+  GB200:
+    expected_gpus: 4
+    nccl:
+      all_reduce:     { min_peak_busbw_gbps: 550 }
+      all_gather:     { min_peak_busbw_gbps: 480 }
+      reduce_scatter: { min_peak_busbw_gbps: 480 }
+      alltoall:       { min_peak_busbw_gbps: 440 }
+    nvbandwidth:
+      device_to_device_memcpy_read_ce: { min_avg_gbps: 650 }
+      host_to_device_memcpy_ce:        { min_avg_gbps: 250 }
+      device_to_host_memcpy_ce:        { min_avg_gbps: 250 }
+
+  GB300:
+    expected_gpus: 4
+    nccl:
+      all_reduce:     { min_peak_busbw_gbps: 550 }
+      all_gather:     { min_peak_busbw_gbps: 480 }
+      reduce_scatter: { min_peak_busbw_gbps: 480 }
+      alltoall:       { min_peak_busbw_gbps: 440 }
+    nvbandwidth:
+      device_to_device_memcpy_read_ce: { min_avg_gbps: 650 }

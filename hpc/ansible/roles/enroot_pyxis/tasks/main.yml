@@ -1,0 +1,34 @@
+# Enroot runs unprivileged containers; Pyxis adds `srun --container-image=...` to Slurm.
+- name: Map the CPU architecture to Debian package naming
+  ansible.builtin.set_fact:
+    deb_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
+
+- name: Install enroot
+  ansible.builtin.apt:
+    deb: "https://github.com/NVIDIA/enroot/releases/download/v{{ enroot_version }}/{{ item }}_{{ enroot_version }}-1_{{ deb_arch }}.deb"
+  loop: [enroot, enroot+caps]
+
+- name: Build dependencies for pyxis
+  ansible.builtin.apt:
+    name: [git, build-essential, libslurm-dev]
+    state: present
+
+- name: Fetch pyxis source
+  ansible.builtin.git:
+    repo: https://github.com/NVIDIA/pyxis.git
+    dest: /usr/local/src/pyxis
+    version: "v{{ pyxis_version }}"
+    depth: 1
+
+- name: Build and install pyxis
+  ansible.builtin.command:
+    cmd: make install
+    chdir: /usr/local/src/pyxis
+    creates: /usr/local/lib/slurm/spank_pyxis.so
+
+- name: Register pyxis as a Slurm SPANK plugin
+  ansible.builtin.file:
+    src: /usr/local/share/pyxis/pyxis.conf
+    dest: /etc/slurm/plugstack.conf.d/pyxis.conf
+    state: link
+  notify: Restart slurmd

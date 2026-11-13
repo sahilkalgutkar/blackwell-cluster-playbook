@@ -1,0 +1,79 @@
+# Disaggregated serving with NVIDIA Dynamo on one 8-GPU HGX B200 node:
+# prefill (prompt processing) and decode (token generation) run in separate vLLM workers,
+# and the KV cache moves between them over NVLink with NIXL.
+#
+# Adapted from ai-dynamo/dynamo v1.6.2 examples/backends/vllm/deploy/disagg.yaml.
+# Needs the Dynamo platform (operator) installed and a secret with your Hugging Face token:
+#   kubectl create secret generic hf-token-secret --from-literal=HF_TOKEN=<token>
+#
+# Layout: 2 prefill workers x 1 GPU + 1 decode worker x 2 GPUs (TP2) = 4 GPUs, leaving
+# room for a second copy. Change the replica counts and compare tokens/s and TTFT with
+# inference/bench/aiperf-sweep.sh: finding the best split is the point of the exercise.
+apiVersion: nvidia.com/v1beta1
+kind: DynamoGraphDeployment
+metadata:
+  name: qwen3-disagg
+spec:
+  components:
+    - name: Frontend
+      type: frontend
+      replicas: 1
+      podTemplate:
+        spec:
+          containers:
+            - name: main
+              image: nvcr.io/nvidia/ai-dynamo/vllm-runtime:1.6.2
+
+    - name: prefill
+      type: prefill
+      replicas: 2
+      podTemplate:
+        spec:
+          containers:
+            - name: main
+              image: nvcr.io/nvidia/ai-dynamo/vllm-runtime:1.6.2
+              workingDir: /workspace/examples/backends/vllm
+              command: [python3, -m, dynamo.vllm]
+              args:
+                - --model
+                - Qwen/Qwen3-32B
+                - --disaggregation-mode
+                - prefill
+                - --kv-transfer-config
+                - '{"kv_connector":"NixlConnector","kv_role":"kv_producer"}'
+              envFrom:
+                - secretRef:
+                    name: hf-token-secret
+              resources:
+                limits:
+                  nvidia.com/gpu: "1"
+                requests:
+                  ephemeral-storage: 80Gi
+
+    - name: decode
+      type: decode
+      replicas: 1
+      podTemplate:
+        spec:
+          containers:
+            - name: main
+              image: nvcr.io/nvidia/ai-dynamo/vllm-runtime:1.6.2
+              workingDir: /workspace/examples/backends/vllm
+              command: [python3, -m, dynamo.vllm]
+              args:
+                - --model
+                - Qwen/Qwen3-32B
+                - --tensor-parallel-size
+                - "2"
+                - --disaggregation-mode
+                - decode
+                - --kv-transfer-config
+                - '{"kv_connector":"NixlConnector","kv_role":"kv_consumer"}'
+              envFrom:
+                - secretRef:
+                    name: hf-token-secret
+              resources:
+                limits:
+                  nvidia.com/gpu: "2"
+                requests:
+                  ephemeral-storage: 80Gi

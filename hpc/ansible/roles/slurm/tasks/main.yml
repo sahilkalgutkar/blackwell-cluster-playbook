@@ -1,0 +1,42 @@
+- name: Install Slurm controller packages
+  ansible.builtin.apt:
+    name: [slurmctld, slurm-client]
+    state: present
+  when: slurm_role == "controller"
+
+- name: Install Slurm compute packages
+  ansible.builtin.apt:
+    name: [slurmd, slurm-client, libpmix-dev]
+    state: present
+  when: slurm_role == "compute"
+
+- name: Slurm spool directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: slurm
+    group: slurm
+    mode: "0755"
+  loop: [/var/spool/slurmctld, /var/spool/slurmd, /etc/slurm/plugstack.conf.d]
+
+- name: Slurm configuration
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/slurm/{{ item }}"
+    mode: "0644"
+  loop: [slurm.conf, gres.conf, cgroup.conf, plugstack.conf]
+  notify: Restart slurm daemon
+
+- name: Block topology for NVL72 racks
+  ansible.builtin.template:
+    src: topology.conf.j2
+    dest: /etc/slurm/topology.conf
+    mode: "0644"
+  when: slurm_topology_plugin == "topology/block"
+  notify: Restart slurm daemon
+
+- name: Start Slurm daemon
+  ansible.builtin.service:
+    name: "{{ 'slurmctld' if slurm_role == 'controller' else 'slurmd' }}"
+    state: started
+    enabled: true

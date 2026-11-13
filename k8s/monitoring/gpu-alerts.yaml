@@ -1,0 +1,52 @@
+# Prometheus alerts on dcgm-exporter metrics. Metric names match dcgm-exporter 4.9's
+# default counters (they were renamed in 4.x, e.g. DCGM_FI_DEV_GPU_TEMP ->
+# DCGM_FI_DEV_GPU_TEMP_CELSIUS). Needs the Prometheus Operator CRDs.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: gpu-health
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: gpu-health
+      rules:
+        - alert: GpuXidError
+          expr: DCGM_FI_DEV_XID_ERROR > 0
+          for: 1m
+          labels: { severity: critical }
+          annotations:
+            summary: "XID {{ $value }} on {{ $labels.Hostname }} GPU {{ $labels.gpu }}"
+            description: "Look the XID up in NVIDIA's XID catalog; 79 (fell off the bus) and 94/95 (ECC) need a drain."
+        - alert: GpuRowRemapFailed
+          expr: DCGM_FI_DEV_ROW_REMAP_FAILED > 0
+          labels: { severity: critical }
+          annotations:
+            summary: "HBM row remap failed on {{ $labels.Hostname }} GPU {{ $labels.gpu }}: RMA candidate"
+        - alert: GpuUncorrectableRemaps
+          expr: increase(DCGM_FI_DEV_ROW_REMAP_UNCORRECTABLE_TOTAL[1h]) > 0
+          labels: { severity: warning }
+          annotations:
+            summary: "Uncorrectable memory errors remapped on {{ $labels.Hostname }} GPU {{ $labels.gpu }}; reset the GPU when idle"
+        - alert: GpuHot
+          expr: DCGM_FI_DEV_GPU_TEMP_CELSIUS > 85
+          for: 5m
+          labels: { severity: warning }
+          annotations:
+            summary: "{{ $labels.Hostname }} GPU {{ $labels.gpu }} at {{ $value }}°C"
+        - alert: GpuMemoryHot
+          expr: DCGM_FI_DEV_MEMORY_TEMP_CELSIUS > 95
+          for: 5m
+          labels: { severity: warning }
+          annotations:
+            summary: "{{ $labels.Hostname }} GPU {{ $labels.gpu }} HBM at {{ $value }}°C"
+        - alert: GpuNvlinkIdleDuringCollectiveJob
+          # NVLink traffic dropping to zero on one GPU while its peers stay busy usually means
+          # a degraded link or a hung rank. Tune the threshold for your workloads.
+          expr: |
+            DCGM_FI_DEV_NVLINK_THROUGHPUT_BYTES_PER_SECOND == 0
+            and on(Hostname) (avg by (Hostname) (DCGM_FI_DEV_NVLINK_THROUGHPUT_BYTES_PER_SECOND) > 1e10)
+          for: 5m
+          labels: { severity: warning }
+          annotations:
+            summary: "{{ $labels.Hostname }} GPU {{ $labels.gpu }} has no NVLink traffic while its peers do"

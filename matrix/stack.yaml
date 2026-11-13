@@ -1,0 +1,121 @@
+# The software stack this playbook targets, with pinned versions.
+#
+# `bcp stack check` compares each tracked entry with its newest stable upstream release
+# (release candidates, alphas and betas are ignored). The weekly stack-watch workflow runs
+# `bcp stack check --update` and opens a PR when something moved.
+#
+# source: github-release | github-tag | dockerhub | manual
+# Pins last refreshed: 2026-11-13
+
+components:
+  # ---- GPU platform -------------------------------------------------------
+  - name: cuda
+    source: dockerhub
+    repo: nvidia/cuda
+    tag_filter: devel-ubuntu24.04
+    tag_pattern: '(\d+\.\d+\.\d+)-devel-ubuntu24\.04'
+    pinned: "13.5.0"
+    used_by: containers/nccl-tests
+
+  - name: nvidia-driver
+    source: manual
+    pinned: null
+    notes: record the branch you validated on (bcp results capture it per run)
+
+  - name: dcgm
+    source: github-tag
+    repo: NVIDIA/DCGM
+    pinned: "v4.7.0"
+    used_by: validate
+
+  - name: dcgm-exporter
+    source: github-release
+    repo: NVIDIA/dcgm-exporter
+    pinned: "4.9.0"
+    used_by: k8s/monitoring
+
+  # ---- Communication and benchmarks ----------------------------------------
+  - name: nccl
+    source: github-release
+    repo: NVIDIA/nccl
+    tag_pattern: '^v\d+\.\d+\.\d+-\d+$'   # the repo also releases nccl4py
+    pinned: "v2.32.6-1"
+    used_by: validate, hpc, k8s
+
+  - name: nccl-tests
+    source: github-tag
+    repo: NVIDIA/nccl-tests
+    pinned: "v2.21.1"
+    used_by: containers/nccl-tests
+
+  - name: nvbandwidth
+    source: github-release
+    repo: NVIDIA/nvbandwidth
+    pinned: "v0.11.0"
+    used_by: validate
+
+  - name: hpc-benchmarks
+    source: manual
+    pinned: null
+    notes: NGC container nvcr.io/nvidia/hpc-benchmarks; pick the newest tag on NGC
+
+  # ---- Scheduling ----------------------------------------------------------
+  - name: pyxis
+    source: github-release
+    repo: NVIDIA/pyxis
+    pinned: "v0.24.0"
+    used_by: hpc/ansible
+
+  - name: enroot
+    source: github-release
+    repo: NVIDIA/enroot
+    pinned: "v4.2.1"
+    used_by: hpc/ansible
+
+  - name: gpu-operator
+    source: github-release
+    repo: NVIDIA/gpu-operator
+    pinned: "v26.7.2"
+    used_by: k8s/gpu-operator
+
+  - name: dra-driver-nvidia-gpu
+    source: github-release
+    repo: kubernetes-sigs/dra-driver-nvidia-gpu
+    order: date   # numbering restarted at v0.x after the move from NVIDIA/k8s-dra-driver-gpu
+    pinned: "v0.5.1"
+    used_by: k8s/dra
+
+  - name: kai-scheduler
+    source: github-release
+    repo: kai-scheduler/KAI-Scheduler
+    pinned: "v0.19.0"
+    used_by: k8s/kai
+
+  # ---- Inference -----------------------------------------------------------
+  - name: dynamo
+    source: github-release
+    repo: ai-dynamo/dynamo
+    pinned: "v1.6.2"
+    used_by: inference/dynamo
+
+  - name: aiperf
+    source: github-release
+    repo: ai-dynamo/aiperf
+    pinned: "v0.13.0"
+    used_by: inference/bench
+
+  - name: vllm
+    source: github-release
+    repo: vllm-project/vllm
+    pinned: "v0.32.0"
+    used_by: inference/dynamo (via the Dynamo vLLM runtime image)
+
+  - name: sglang
+    source: github-release
+    repo: sgl-project/sglang
+    pinned: "v0.5.23"
+
+  - name: tensorrt-llm
+    source: github-release
+    repo: NVIDIA/TensorRT-LLM
+    pinned: "v1.2.1"

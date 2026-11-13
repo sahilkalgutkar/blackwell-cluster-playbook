@@ -1,0 +1,23 @@
+# Helm values for the NVIDIA GPU Operator (version pinned in matrix/stack.yaml).
+#
+#   helm repo add nvidia https://helm.ngc.nvidia.com/nvidia && helm repo update
+#   helm install gpu-operator nvidia/gpu-operator -n gpu-operator --create-namespace \
+#     --version <gpu-operator pin> -f k8s/gpu-operator/values.yaml
+
+driver:
+  # DGX OS and most GPU clouds ship the driver on the host: leave the operator out of it.
+  # Set to true on plain Ubuntu nodes to have the operator install the driver container.
+  enabled: false
+
+toolkit:
+  enabled: true
+
+cdi:
+  enabled: true
+
+dcgmExporter:
+  enabled: true
+  serviceMonitor:
+    enabled: true   # needs the Prometheus Operator CRDs (kube-prometheus-stack)
+
+# Rack-scale NVLink on GB200/GB300 (IMEX channels) is handled by the DRA driver: see k8s/dra/.
