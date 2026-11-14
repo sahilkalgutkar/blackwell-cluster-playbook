@@ -2,9 +2,11 @@ name: images
 
 # Build (not push) the containers a rental day depends on, so a broken Dockerfile shows up
 # here rather than on a node billed by the hour.
+#
+# Every pull request runs this, with no path filter: these builds are required checks on main,
+# and a required check that never starts would leave a PR unmergeable.
 on:
   pull_request:
-    paths: [containers/**, src/**, pyproject.toml, matrix/stack.yaml, .github/workflows/images.yml]
   push:
     branches: [main]
     paths: [containers/**, src/**, pyproject.toml, matrix/stack.yaml, .github/workflows/images.yml]
