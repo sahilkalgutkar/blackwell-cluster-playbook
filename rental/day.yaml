@@ -1,0 +1,109 @@
+# One rented 8x B200 (HGX) node, scripted end to end: `bcp rental run`.
+#
+#   bcp rental plan              # steps, time and cost estimate; runs nothing
+#   bcp rental plan --commands   # also print every command
+#   bcp rental run               # do it (inside tmux); --resume continues after a failure
+#
+# `{name}` takes the pinned version from matrix/stack.yaml and `{name:bare}` drops a leading
+# "v", so the weekly stack-watch bumps flow into the next rental day automatically.
+
+rate_usd_per_hour: 65   # what you pay for the whole node; used for the cost estimate only
+expect_node: {gpu_name: NVIDIA B200, gpu_count: 8, compute_cap: 10.0}   # for `plan` off-node
+hf_home: ~/.cache/huggingface   # model cache on the host; needs ~150 GB free
+disk_free_gb_min: 400           # images (~70 GB) + models (~120 GB) + headroom
+
+images:
+  bench: bcp-bench:local   # built on the node from containers/bench/Dockerfile
+  vllm: "vllm/vllm-openai:{vllm}"
+  sglang: "lmsysorg/sglang:{sglang}"
+  trtllm: "nvcr.io/nvidia/tensorrt-llm/release:{tensorrt-llm:bare}"
+  dynamo-vllm: "nvcr.io/nvidia/ai-dynamo/vllm-runtime:{dynamo:bare}"
+  pytorch: "nvcr.io/nvidia/pytorch:{ngc-pytorch}-py3"   # 26.10: PyTorch 2.15, CUDA 13.4, TE 2.20
+
+host_packages:   # installed into the venv that runs bcp
+  - "aiperf=={aiperf:bare}"
+  - "huggingface_hub>=0.34"
+
+validation:
+  quick: true   # ~10 min, and a gate: stops the day if the hardware is broken
+  full: true    # ~50 min: DCGM level 3, NCCL up to 16 GiB, nvbandwidth
+
+inference:
+  # One model family in three precisions. All Apache-2.0 and ungated, so no HF token needed.
+  tokenizer: Qwen/Qwen3-32B
+  models:
+    bf16: Qwen/Qwen3-32B             # 65 GB
+    fp8: Qwen/Qwen3-32B-FP8          # 34 GB, block-scaled FP8 from Qwen
+    nvfp4: nvidia/Qwen3-32B-NVFP4    # 21 GB, NVIDIA ModelOpt NVFP4 (Blackwell only)
+  workload:
+    isl: 2048   # input tokens per request (chat / RAG shaped)
+    osl: 256    # output tokens; ignore_eos makes every request produce exactly this many
+  max_model_len: 4096
+  concurrency:
+    1: [1, 8, 32, 64, 128]       # single-GPU servers
+    4: [8, 32, 128, 256, 512]    # 4-GPU Dynamo layouts: same load per GPU at the top end
+  ttft_sla_ms: 2000   # the report also picks the best throughput with p99 TTFT under this
+  server_timeout_min: 30   # model load + CUDA graphs; TensorRT-LLM's autotuner is the slowest
+  est_min_per_point: 1.75  # for the time estimate only
+  configs:
+    # Precision on one GPU: what Blackwell's FP4 tensor cores buy.
+    - {id: vllm-bf16, engine: vllm, precision: bf16, gpus: 1}
+    - {id: vllm-fp8, engine: vllm, precision: fp8, gpus: 1}
+    - {id: vllm-nvfp4, engine: vllm, precision: nvfp4, gpus: 1}
+    # Engines at the same precision and GPU count.
+    - {id: sglang-fp8, engine: sglang, precision: fp8, gpus: 1}
+    - {id: sglang-nvfp4, engine: sglang, precision: nvfp4, gpus: 1}
+    - {id: trtllm-fp8, engine: trtllm, precision: fp8, gpus: 1}
+    - {id: trtllm-nvfp4, engine: trtllm, precision: nvfp4, gpus: 1}
+    # Dynamo on 4 GPUs: prefill and decode together vs split, KV cache moved over NVLink (NIXL).
+    - {id: dynamo-agg-4x1, engine: dynamo-vllm, precision: fp8, layout: {agg: [1, 1, 1, 1]}}
+    - {id: dynamo-2p2d, engine: dynamo-vllm, precision: fp8, layout: {prefill: [1, 1], decode: [1, 1]}}
+    - {id: dynamo-3p1d, engine: dynamo-vllm, precision: fp8, layout: {prefill: [1, 1, 1], decode: [1]}}
+    - {id: dynamo-2p1d-tp2, engine: dynamo-vllm, precision: fp8, layout: {prefill: [1, 1], decode: [2]}}
+
+training:
+  # Synthetic tokens through a Llama-style model (training/bench_train.py): no dataset download.
+  seq_len: 4096
+  warmup_steps: 10
+  steps: 40
+  runs:
+    # Scaling 1 -> 8 GPUs at a fixed per-GPU batch (weak scaling), FSDP2 over NVLink.
+    - {id: scale-3b-1gpu, preset: 3b, precision: bf16, gpus: 1, micro_batch: 2}
+    - {id: scale-3b-2gpu, preset: 3b, precision: bf16, gpus: 2, micro_batch: 2}
+    - {id: scale-3b-4gpu, preset: 3b, precision: bf16, gpus: 4, micro_batch: 2}
+    - {id: scale-3b-8gpu, preset: 3b, precision: bf16, gpus: 8, micro_batch: 2}
+    # Precision on all 8 GPUs, Transformer Engine recipes. A failed inference or training run
+    # is recorded and the day moves on; NVFP4 training is the newest, so the likeliest to.
+    - {id: 8b-bf16, preset: 8b, precision: bf16, gpus: 8, micro_batch: 2}
+    - {id: 8b-fp8, preset: 8b, precision: fp8, gpus: 8, micro_batch: 2}
+    - {id: 8b-mxfp8, preset: 8b, precision: mxfp8, gpus: 8, micro_batch: 2}
+    - {id: 8b-nvfp4, preset: 8b, precision: nvfp4, gpus: 8, micro_batch: 2}
+
+# `--rehearse`: the same pipeline, shrunk to run on a cheap 1-2 GPU box (an H100 or A100 pair
+# is ideal) in about 45 minutes. Run it first: a typo found here costs $3, not $65 an hour.
+# Anything the box can't do (NVFP4 off Blackwell, 4-GPU layouts on 2 GPUs) is skipped.
+rehearsal:
+  rate_usd_per_hour: 6
+  disk_free_gb_min: 120
+  expect_node: {gpu_name: NVIDIA H100 80GB HBM3, gpu_count: 2, compute_cap: 9.0}
+  validation: {quick: true, full: false}
+  inference:
+    tokenizer: Qwen/Qwen3-0.6B
+    models: {bf16: Qwen/Qwen3-0.6B, fp8: Qwen/Qwen3-0.6B-FP8, nvfp4: nvidia/Qwen3-32B-NVFP4}
+    concurrency: {1: [1, 8], 2: [1, 8], 4: [8, 32]}
+    configs:
+      - {id: vllm-bf16, engine: vllm, precision: bf16, gpus: 1}
+      - {id: vllm-fp8, engine: vllm, precision: fp8, gpus: 1}
+      - {id: vllm-nvfp4, engine: vllm, precision: nvfp4, gpus: 1}
+      - {id: sglang-fp8, engine: sglang, precision: fp8, gpus: 1}
+      - {id: trtllm-fp8, engine: trtllm, precision: fp8, gpus: 1}
+      - {id: dynamo-1p1d, engine: dynamo-vllm, precision: fp8, layout: {prefill: [1], decode: [1]}}
+  training:
+    seq_len: 1024
+    warmup_steps: 2
+    steps: 5
+    runs:
+      - {id: scale-1b-1gpu, preset: 1b, precision: bf16, gpus: 1, micro_batch: 1}
+      - {id: scale-1b-2gpu, preset: 1b, precision: bf16, gpus: 2, micro_batch: 1}
+      - {id: 1b-fp8, preset: 1b, precision: fp8, gpus: 2, micro_batch: 1}
+      - {id: 1b-mxfp8, preset: 1b, precision: mxfp8, gpus: 2, micro_batch: 1}

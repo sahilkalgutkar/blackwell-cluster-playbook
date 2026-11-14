@@ -103,6 +103,64 @@ def cmd_stack(args: argparse.Namespace) -> int:
     return 1 if args.fail_on_outdated and updates else 0
 
 
+def _rental_ctx(args: argparse.Namespace):
+    from bcp import rental
+
+    node = None
+    if args.gpus:
+        node = rental.Node(args.gpu_name, args.gpus, args.compute_cap, detected=False)
+    run_dir = Path(args.run_dir) if getattr(args, "run_dir", None) else None
+    ctx = rental.make_ctx(Path(args.config), args.rehearse, run_dir, args.rate, node)
+    return rental, ctx, rental.build_plan(ctx)
+
+
+def cmd_rental_plan(args: argparse.Namespace) -> int:
+    rental, ctx, steps = _rental_ctx(args)
+    print(rental.render_plan(ctx, steps, commands=args.commands))
+    if args.render_dir:
+        for path in rental.render_scripts(ctx, steps, Path(args.render_dir)):
+            print(f"wrote {path}", file=sys.stderr)
+    return 0
+
+
+def cmd_rental_run(args: argparse.Namespace) -> int:
+    rental, ctx, steps = _rental_ctx(args)
+    if args.resume and not args.run_dir:
+        print(
+            "error: --resume needs --run-dir (the runs/day-... directory to continue)",
+            file=sys.stderr,
+        )
+        return 2
+    if not ctx.node.detected and not args.gpus:
+        print(
+            "error: no GPUs found (nvidia-smi). `bcp rental run` is for the rented node; "
+            "use `bcp rental plan` to preview.",
+            file=sys.stderr,
+        )
+        return 2
+    print(rental.render_plan(ctx, steps))
+    only = set(args.only.split(",")) if args.only else None
+    return rental.Runner(ctx, steps).run(resume=args.resume, only=only)
+
+
+def cmd_rental_report(args: argparse.Namespace) -> int:
+    from bcp import bench
+
+    out = bench.write_summary(
+        Path(args.run_dir), Path(args.out) if args.out else None, plot=not args.no_plot
+    )
+    print(f"Wrote {out}", file=sys.stderr)
+    return 0
+
+
+def cmd_rental_package(args: argparse.Namespace) -> int:
+    from bcp import bench
+
+    share, tarball = bench.package(Path(args.run_dir))
+    print(f"Redacted copy (safe to commit): {share}\nFull tarball (private): {tarball}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="bcp", description="Validate and benchmark NVIDIA GPU nodes and clusters."
@@ -142,6 +200,53 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--summary-file", metavar="FILE.md", help="write a Markdown summary (PR body)")
     c.add_argument("--fail-on-outdated", action="store_true")
     c.set_defaults(func=cmd_stack)
+
+    p = sub.add_parser("rental", help="plan and run a scripted day on rented GPUs")
+    rsub = p.add_subparsers(dest="rental_command", required=True)
+    for name, func, text in (
+        ("plan", cmd_rental_plan, "show the day's steps, time and cost; runs nothing"),
+        ("run", cmd_rental_run, "run the day on this node (use tmux)"),
+    ):
+        r = rsub.add_parser(name, help=text)
+        r.add_argument("--config", default="rental/day.yaml")
+        r.add_argument(
+            "--rehearse",
+            action="store_true",
+            help="small models and short runs, for a cheap 1-2 GPU box",
+        )
+        r.add_argument("--rate", type=float, help="node price in USD per hour (estimate only)")
+        r.add_argument("--run-dir", metavar="DIR", help="default: runs/day-<UTC time>")
+        g = r.add_argument_group("node override (otherwise detected, or expect_node)")
+        g.add_argument("--gpus", type=int)
+        g.add_argument("--gpu-name", default="NVIDIA B200")
+        g.add_argument("--compute-cap", type=float, default=10.0)
+        if name == "plan":
+            r.add_argument("--commands", action="store_true", help="print every command")
+            r.add_argument(
+                "--render-dir",
+                metavar="DIR",
+                help="write the generated scripts (prefetch, Dynamo launchers)",
+            )
+        else:
+            r.add_argument(
+                "--resume",
+                action="store_true",
+                help="skip steps that already succeeded in --run-dir",
+            )
+            r.add_argument(
+                "--only",
+                metavar="PHASES",
+                help="comma-separated phases or step ids, e.g. inference,training",
+            )
+        r.set_defaults(func=func)
+    r = rsub.add_parser("report", help="write summary.md for a run directory")
+    r.add_argument("run_dir", metavar="RUN_DIR")
+    r.add_argument("--out", metavar="FILE.md")
+    r.add_argument("--no-plot", action="store_true")
+    r.set_defaults(func=cmd_rental_report)
+    r = rsub.add_parser("package", help="redacted copy to commit, plus a full tarball")
+    r.add_argument("run_dir", metavar="RUN_DIR")
+    r.set_defaults(func=cmd_rental_package)
     return parser
 
 

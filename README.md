@@ -29,7 +29,8 @@ Be clear-eyed about what has run where:
 
 | Part | State |
 |---|---|
-| `bcp` CLI, parsers, checks | Working. 49 tests, end-to-end demo in CI on synthetic fixtures |
+| `bcp` CLI, parsers, checks | Working. 71 tests, end-to-end demo in CI on synthetic fixtures |
+| Rental day (`bcp rental`) | Scripted and tested without GPUs: plans, generated scripts, resume logic, reports and redaction in CI; the training loop runs on CPU in CI. Not yet run on a GPU node |
 | Real-hardware results | **None yet.** See [docs/rental-runbook.md](docs/rental-runbook.md) |
 | `hpc/`, `k8s/`, `inference/` | Drafts. Syntax- and schema-checked in CI, not yet run on hardware |
 
@@ -120,6 +121,23 @@ rack-wide NVLink fabric (state `Completed`, non-zero cluster UUID), so `bcp` ide
 as part of an NVL72 domain rather than a 4-GPU server. `--format mermaid` output pastes
 straight into GitHub Markdown.
 
+## A scripted day on rented GPUs
+
+```bash
+bcp rental plan --commands   # on your laptop: every step, time and cost (~4.5 h, ~$300)
+bcp rental run --rehearse    # on a cheap 1-2 GPU box first: same pipeline, small models
+bcp rental run               # on the 8x B200 node, inside tmux
+```
+
+One command does validation, an inference matrix (BF16 / FP8 / NVFP4; vLLM, SGLang and
+TensorRT-LLM; NVIDIA Dynamo with prefill and decode together vs split) and a training matrix
+(scaling 1 → 8 GPUs with FSDP2; BF16, FP8, MXFP8 and NVFP4 through Transformer Engine). It
+stops early if the node is broken, resumes after a failure, and ends with `summary.md` and a
+redacted copy that is safe to commit. Container tags come from `matrix/stack.yaml`, so the
+weekly version bumps reach the next run automatically. The plan is in
+[`rental/day.yaml`](rental/day.yaml), the procedure in
+[docs/rental-runbook.md](docs/rental-runbook.md).
+
 ## How the platforms relate
 
 DGX, HGX, MGX and NVL72 describe different things (a product line, a baseboard, a reference
@@ -129,7 +147,7 @@ out and explains the terms the checks use: NVSwitch, IMEX, ComputeDomain, NVLS, 
 ## Keeping the stack current
 
 ```bash
-bcp stack check            # pinned vs latest stable upstream, for 16 tracked components
+bcp stack check            # pinned vs latest stable upstream, for 18 tracked components
 bcp stack check --update   # rewrite the pins (comments in stack.yaml are kept)
 ```
 
@@ -141,26 +159,31 @@ after it moved to `kubernetes-sigs`) are handled by `tag_pattern` and `order: da
 ## Layout
 
 ```text
-src/bcp/            CLI: probes, parsers, topology, checks, report, stack tracking
+src/bcp/            CLI: probes, parsers, topology, checks, report, stack tracking,
+                    rental day orchestration, benchmark reports and redaction
+rental/day.yaml     the scripted rental day: validation, inference and training matrices
 configs/            pass/fail thresholds per GPU model (starting points; tune per site)
 fixtures/           synthetic tool output for H100, DGX B200, GB200 NVL72, degraded B200
 matrix/stack.yaml   pinned component versions, checked weekly
-containers/         nccl-tests image (MPI build) for Slurm and Kubernetes
+containers/         nccl-tests image (MPI build) for Slurm and Kubernetes; validation image
 hpc/                Ansible (Slurm, Pyxis/Enroot, NVL72 block topology), sbatch jobs
 k8s/                GPU Operator, DRA ComputeDomain, KAI queues, DCGM alerts
 inference/          Dynamo prefill/decode deployment, AIPerf sweep
+training/           training throughput and MFU benchmark (FSDP2, Transformer Engine)
 docs/               platform guide, rented-hardware runbook
 results/            real-hardware runs only
 ```
 
 ## Roadmap
 
-- [ ] First real run: 8x B200 (`bcp collect --suite full`, HPL, Dynamo sweep)
+- [ ] First real run: 8x B200 with `bcp rental run` (rehearsal first)
+- [x] Script the rental day end to end, with a quick-validation gate and resume
+- [x] Strip serials, UUIDs, IPs and hostnames before committing raw output (`bcp rental package`)
+- [x] Parse AIPerf exports into a report (`bcp rental report`)
 - [ ] Multi-node NVLink across GB200 trays vs the same job over InfiniBand
-- [ ] `bcp collect --redact` to strip serials, UUIDs and hostnames before committing raw output
+- [ ] HPL in the rental day (NGC HPC-Benchmarks container)
 - [ ] Rubin (Vera Rubin NVL72) profile once real `nvidia-smi` output is available
 - [ ] Grafana dashboard for the DCGM alerts
-- [ ] Parse AIPerf exports into `bcp report`
 
 ## License
 

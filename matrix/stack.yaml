@@ -4,7 +4,7 @@
 # (release candidates, alphas and betas are ignored). The weekly stack-watch workflow runs
 # `bcp stack check --update` and opens a PR when something moved.
 #
-# source: github-release | github-tag | dockerhub | manual
+# source: github-release | github-tag | dockerhub | ngc | manual
 # Pins last refreshed: 2026-11-13
 
 components:
@@ -55,9 +55,11 @@ components:
     used_by: validate
 
   - name: hpc-benchmarks
-    source: manual
-    pinned: null
-    notes: NGC container nvcr.io/nvidia/hpc-benchmarks; pick the newest tag on NGC
+    source: ngc
+    repo: nvidia/hpc-benchmarks
+    tag_pattern: '(\d\d\.\d\d)'
+    pinned: "26.02"
+    used_by: hpc/jobs/hpl.sbatch
 
   # ---- Scheduling ----------------------------------------------------------
   - name: pyxis
@@ -96,26 +98,36 @@ components:
     source: github-release
     repo: ai-dynamo/dynamo
     pinned: "v1.6.2"
-    used_by: inference/dynamo
+    used_by: inference/dynamo, rental/day.yaml
 
   - name: aiperf
     source: github-release
     repo: ai-dynamo/aiperf
     pinned: "v0.13.0"
-    used_by: inference/bench
+    used_by: inference/bench, rental/day.yaml
 
   - name: vllm
     source: github-release
     repo: vllm-project/vllm
     pinned: "v0.32.0"
-    used_by: inference/dynamo (via the Dynamo vLLM runtime image)
+    used_by: rental/day.yaml; inference/dynamo (via the Dynamo vLLM runtime image)
 
   - name: sglang
     source: github-release
     repo: sgl-project/sglang
     pinned: "v0.5.23"
+    used_by: rental/day.yaml
 
   - name: tensorrt-llm
     source: github-release
     repo: NVIDIA/TensorRT-LLM
     pinned: "v1.2.1"
+    used_by: rental/day.yaml
+
+  # ---- Training ------------------------------------------------------------
+  - name: ngc-pytorch
+    source: ngc
+    repo: nvidia/pytorch
+    tag_pattern: '(\d\d\.\d\d)-py3'
+    pinned: "26.10"
+    used_by: rental/day.yaml (training/bench_train.py)

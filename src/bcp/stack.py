@@ -25,7 +25,7 @@ def is_stable(tag: str) -> bool:
 
 
 class Http(Protocol):
-    def get_json(self, url: str): ...
+    def get_json(self, url: str, headers: dict[str, str] | None = None): ...
 
 
 class UrllibHttp:
@@ -33,8 +33,8 @@ class UrllibHttp:
         self.token = token if token is not None else os.environ.get("GITHUB_TOKEN")
         self.timeout = timeout
 
-    def get_json(self, url: str):
-        headers = {"User-Agent": "bcp-stack-check", "Accept": "application/json"}
+    def get_json(self, url: str, headers: dict[str, str] | None = None):
+        headers = {"User-Agent": "bcp-stack-check", "Accept": "application/json", **(headers or {})}
         if self.token and urllib.parse.urlparse(url).hostname == "api.github.com":
             headers["Authorization"] = f"Bearer {self.token}"
         req = urllib.request.Request(url, headers=headers)
@@ -89,6 +89,25 @@ def latest_dockerhub_tag(http: Http, repo: str, pattern: str, name_filter: str =
     return max(versions, key=version_key) if versions else None
 
 
+def latest_ngc_tag(http: Http, repo: str, pattern: str) -> str | None:
+    """Newest matching tag of an NGC (nvcr.io) image. Public images need only an anonymous
+    pull token, which the registry hands out without an account."""
+    auth = http.get_json(f"https://nvcr.io/proxy_auth?scope=repository:{repo}:pull")
+    token = (auth or {}).get("token")
+    data = http.get_json(
+        f"https://nvcr.io/v2/{repo}/tags/list?n=5000",
+        headers={"Authorization": f"Bearer {token}"} if token else None,
+    )
+    versions = []
+    for tag in data.get("tags") or []:
+        m = re.fullmatch(pattern, tag)
+        if m:
+            version = m.group(1) if m.groups() else tag
+            if is_stable(version):
+                versions.append(version)
+    return max(versions, key=version_key) if versions else None
+
+
 @dataclass
 class Status:
     name: str
@@ -118,6 +137,8 @@ def check(components: list[dict], http: Http) -> list[Status]:
                 latest = latest_dockerhub_tag(
                     http, comp["repo"], comp["tag_pattern"], comp.get("tag_filter", "")
                 )
+            elif source == "ngc":
+                latest = latest_ngc_tag(http, comp["repo"], comp["tag_pattern"])
             else:
                 raise ValueError(f"unknown source {source!r}")
         except Exception as exc:  # network errors, rate limits, schema drift

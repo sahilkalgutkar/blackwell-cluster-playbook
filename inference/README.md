@@ -3,7 +3,12 @@
 | Path | What it does | Status |
 |---|---|---|
 | `dynamo/disagg-vllm-b200.yaml` | Prefill/decode split serving of Qwen3-32B on one HGX B200 node | Draft, follows the Dynamo v1.6.2 CRD |
-| `bench/aiperf-sweep.sh` | Concurrency sweep with AIPerf; saves every run's artifacts | Draft |
+| `bench/aiperf-sweep.sh` | Concurrency sweep with AIPerf; same seed and tokenizer for every server; saves every run's artifacts | Used by `bcp rental run` for every inference config |
+
+`bcp rental run` also runs these layouts without Kubernetes: it writes a launch script per
+layout (`bcp rental plan --render-dir DIR` shows them) and runs it in the
+`ai-dynamo/vllm-runtime` container with file-based discovery, next to plain vLLM, SGLang and
+TensorRT-LLM servers for comparison.
 
 ## What to measure
 

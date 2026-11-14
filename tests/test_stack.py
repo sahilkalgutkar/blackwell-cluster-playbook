@@ -123,3 +123,35 @@ def test_rewrite_pinned_keeps_comments_and_other_entries():
     assert '    pinned: "v0.32.0"\n' in out
     assert '    pinned: "v1.6.2"\n' in out
     assert "# comment survives" in out
+
+
+def test_ngc_source_uses_an_anonymous_pull_token():
+    from bcp import stack
+
+    calls = []
+
+    class FakeNgc:
+        def get_json(self, url, headers=None):
+            calls.append((url, headers))
+            if "proxy_auth" in url:
+                return {"token": "anon"}
+            return {
+                "tags": [
+                    "26.09-py3",
+                    "26.10-py3",
+                    "26.11-py3-igpu",
+                    "26.12rc1-py3",
+                    "sha256-abc.sig",
+                ]
+            }
+
+    comp = {
+        "name": "ngc-pytorch",
+        "source": "ngc",
+        "repo": "nvidia/pytorch",
+        "tag_pattern": r"(\d\d\.\d\d)-py3",
+        "pinned": "26.09",
+    }
+    [status] = stack.check([comp], FakeNgc())
+    assert (status.state, status.latest) == ("update", "26.10")
+    assert calls[1][1] == {"Authorization": "Bearer anon"}
