@@ -41,4 +41,5 @@ jobs:
           else
             # shellcheck disable=SC2086
             docker build ${args} -t nccl-tests:ci containers/nccl-tests
+            docker run --rm nccl-tests:ci bash -c 'command -v all_reduce_perf alltoall_perf mpirun sshd && ldd "$(command -v all_reduce_perf)" | grep -q libmpi'
           fi

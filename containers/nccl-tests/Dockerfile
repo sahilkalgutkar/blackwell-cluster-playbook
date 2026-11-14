@@ -16,8 +16,11 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/* \
  && ssh-keygen -A && mkdir -p /run/sshd
 
-RUN git clone --depth 1 --branch "${NCCL_TESTS_VERSION}" https://github.com/NVIDIA/nccl-tests.git /opt/nccl-tests \
- && MPI_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v mpicc)")")")" \
+# Ubuntu keeps Open MPI's include/ and lib/ under the multiarch directory, not /usr; uname -m
+# makes this x86_64-linux-gnu on HGX and aarch64-linux-gnu on Grace (GB200).
+RUN MPI_HOME="/usr/lib/$(uname -m)-linux-gnu/openmpi" \
+ && { test -f "${MPI_HOME}/include/mpi.h" || { echo "mpi.h not found under ${MPI_HOME}" >&2; exit 1; }; } \
+ && git clone --depth 1 --branch "${NCCL_TESTS_VERSION}" https://github.com/NVIDIA/nccl-tests.git /opt/nccl-tests \
  && make -C /opt/nccl-tests -j"$(nproc)" MPI=1 MPI_HOME="${MPI_HOME}" CUDA_HOME=/usr/local/cuda
 
 ENV PATH=/opt/nccl-tests/build:${PATH}
